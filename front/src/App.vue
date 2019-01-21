@@ -1,7 +1,9 @@
 <template>
   <div id="app">
     <img id="logo" alt="Logo TFJM" src="./assets/logo.svg">
-    <router-view/>
+    <transition name="fade" mode="out-in">
+        <router-view/>
+    </transition>
   </div>
 </template>
 
@@ -13,6 +15,7 @@ body, #app {
   text-align: center;
   color: #fafafa;
   background: #1c1c1c;
+  font-size: 16px;
 }
 #app {
     margin-top: 100px;
@@ -21,5 +24,12 @@ body, #app {
 #logo {
     width: 300px;
     margin-bottom: 100px;
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity .3s ease;
+}
+.fade-enter, .fade-leave-to {
+  opacity: 0;
 }
 </style>
