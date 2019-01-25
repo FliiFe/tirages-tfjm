@@ -41,7 +41,7 @@ export default {
         }
     },
     sockets: {
-        login ({ trigram, success }) {
+        login ({ success }) {
             this.loading = false
             this.error = !success
             if (!success) return

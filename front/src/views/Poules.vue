@@ -1,20 +1,22 @@
 <template>
     <div id="poules">
-        <img src="../assets/dice-6.svg" id="dice" @click="sendRand()" v-show="diceVisible"/>
+        <img src="../assets/dice-6.svg" id="dice" @click="sendRand()" v-show="diceVisible && !poule"/>
         <!-- Table wich grows when teams pick a number -->
-        <div v-for="(p, index) in $store.state.poulesConfig" :key="index" v-if="sorted.length >= index*3 + 1">
-            <h2> Poule {{ String.fromCharCode(index + 65) }} </h2>
-            <v-data-table
-                :headers="headers"
-                hide-actions
-                :total-items="p"
-                :items="sorted.slice(3*index, 3*index + 3)"
-                class="elevation-1" dark>
-                <template slot="items" slot-scope="props">
-                    <td class="text-xs-left">{{ props.item.name }}</td>
-                    <td class="text-xs-left">{{ props.item.randnum }}</td>
-                </template>
-            </v-data-table>
+        <div v-for="(p, index) in poules" :key="index">
+            <div v-if="p.length >= 1">
+                <h2> Poule {{ String.fromCharCode(index + 65) }} </h2>
+                <v-data-table
+                    :headers="headers"
+                    hide-actions
+                    :total-items="p.length"
+                    :items="p"
+                    class="elevation-1" dark>
+                    <template slot="items" slot-scope="props">
+                        <td class="text-xs-left">{{ props.item.name }}</td>
+                        <td class="text-xs-left">{{ props.item.randnum }}</td>
+                    </template>
+                </v-data-table>
+            </div>
         </div>
     </div>
 </template>
@@ -22,6 +24,7 @@
 <script>
 export default {
     name: 'poules',
+    props: ['poule'],
     data() {
         return {
             headers: [{text: 'Nom d\'équipe', value: 'name', sortable: false}, {text: 'Nombre tiré', value: 'randnum', sortable: false}],
@@ -31,6 +34,14 @@ export default {
     computed: {
         sorted () {
             return this.$store.state.poulesValue.slice(0).sort(({randnum: a}, {randnum: b}) => a-b)
+        },
+        poules () {
+            let copy = this.sorted.slice(0);
+            const poules = []
+            this.$store.state.poulesConfig.forEach(n => {
+                poules.push(copy.splice(0, n));
+            })
+            return this.poule ? poules.map((e, i) => i === this.poule-1 ? e : []) : poules;
         }
     },
     methods: {

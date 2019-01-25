@@ -41,7 +41,8 @@ export default new Router({
         {
             path: '/tirage/:poule',
             name: 'tirage',
-            component: Tirage
+            component: Tirage,
+            props: true
         }
     ]
 })

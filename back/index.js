@@ -65,10 +65,17 @@ io.on('connection', socket => {
         log.info('poules', 'poulesValue:', poulesValue);
         // Toutes les équipes ont tiré leur nombre
         if (poulesValue.length === teams.length) {
-            setTimeout(() => io.to('teams').emit('tirage'), 2000);
             let poulesCopy = poulesValue.slice(0);
-            poulesConfig.forEach(el => poules.push(poulesCopy.splice(0, el).map(({name}) => ({name, socketid: getSocketIdFromName(name)}))));
+            poulesConfig.forEach(el => 
+                poules.push(poulesCopy.splice(0, el).map(({name}) => 
+                    ({name, socketid: getSocketIdFromName(name)}))));
             log.notice('poules', 'Fin du choix des poules. Les poules sont: %j', poules);
+            // On prévient le frontend des équipes de passer au tirage de leur poule
+            setTimeout(() => {
+                poules.forEach((teams, poule) => {
+                    teams.forEach(team => io.to(team.socketid).emit('tirage', poule+1));
+                });
+            }, 2000);
         }
     });
 });
