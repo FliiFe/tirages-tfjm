@@ -44,8 +44,13 @@ export default {
         login ({ trigram, success }) {
             this.loading = false
             this.error = !success
-            if (success) this.$router.push('/wait') // waiting room, wait for all the teams to be there
+            if (!success) return
+            this.$router.push('/wait') // waiting room, wait for all the teams to be there
+            this.$store.commit('connected', true);
         }
+    },
+    mounted () {
+        if(this.$store.state.spectator === true) this.$router.push('/');
     }
 }
 </script>

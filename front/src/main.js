@@ -1,21 +1,21 @@
 import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
+import store from './store'
+import VueSocketio from 'vue-socket.io-extended';
+import io from 'socket.io-client';
 import Vuetify from 'vuetify'
 import 'vuetify/dist/vuetify.min.css'
-import 'material-design-icons-iconfont/dist/material-design-icons.css'
-import VueSocketIO from 'vue-socket.io'
-
-Vue.use(new VueSocketIO({
-    debug: process.env.NODE_ENV === 'development',
-    connection: process.env.REMOTE_SOCKET || 'http://localhost:8081'
-}))
-
-Vue.use(Vuetify)
+import 'material-design-icons-iconfont'
 
 Vue.config.productionTip = false
 
+Vue.use(Vuetify)
+
+Vue.use(VueSocketio, io('http://localhost:8081'), { store });
+
 new Vue({
     router,
+    store,
     render: h => h(App)
 }).$mount('#app')
