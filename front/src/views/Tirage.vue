@@ -20,7 +20,7 @@
             </template>
         </v-data-table>
         <!-- Si c'est à l'équipe de tirer -->
-        <div v-show="$store.state.tirages[poule].team === $store.state.trigram">
+        <div v-show="$store.state.tirages[poule].team === $store.state.trigram && !dialog && !hasPendingProblem">
             <em>Cliquez sur le dé pour tirer un problème</em>
             <img src="../assets/dice-6.svg" id="dice" @click="pickProblem()"/>
         </div>
@@ -34,8 +34,8 @@
                 </v-card-text>
                 <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn color="red darken-1" flat @click="dialog = false && reject()">Refuser</v-btn>
-                    <v-btn color="green darken-1" flat @click="dialog = false && accept()">Accepter</v-btn>
+                    <v-btn color="red darken-1" flat @click="reject()">Refuser</v-btn>
+                    <v-btn color="green darken-1" flat @click="accept()">Accepter</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -69,6 +69,15 @@ export default {
         // Retourne la lettre correspondant à la n-ième poule
         pouleLetter() {
             return String.fromCharCode(parseInt(this.poule) + 64);
+        },
+        hasPendingProblem() {
+            let haspending = false;
+            this.$store.state.tirages[this.poule].pb.forEach(team => {
+                for (let p = 1; p <= this.$store.state.problemes; p++) {
+                    if(team['p' + p] === -2) haspending = true;
+                }
+            });
+            return haspending;
         }
     },
     methods: {
@@ -77,10 +86,12 @@ export default {
             this.$socket.emit('pickProblem');
         },
         accept() {
-            this.$socket.emit('acceptProblem', true);
+            this.dialog = false;
+            this.$socket.emit('acceptProblem', {ans: true, pb: this.pb});
         },
         reject() {
-            this.$socket.emit('acceptProblem', false);
+            this.dialog = false;
+            this.$socket.emit('acceptProblem', {ans: false, pb: this.pb});
         }
     },
     sockets: {

@@ -13,6 +13,7 @@ let poulesValue = [];
 let poules = [];
 // Tableau des tirages par équipe
 let tirages = {};
+poulesConfig.forEach((_,i) => tirages[i+1] = {});
 
 log.info('config', 'teams: %s', teams.join(', '));
 // log.info('config', 'teamPassword: %s', passwordChecker);
@@ -101,6 +102,30 @@ io.on('connection', socket => {
         const pb = pbs[Math.floor(Math.random() * pbs.length)];
         io.emit('problemPicked', {team, pb});
         changePbStatus(poule, team, pb, -2);
+        io.emit('tirages', tirages);
+    });
+    socket.on('acceptProblem', ({ans, pb}) => {
+        if(!isConnectedTeam(socket)) return log.info('tirage', 'rejet d\'un problème');
+        const team = getNameFromSocketId(socket.id);
+        const poule = poules.findIndex(p => p.includes(team)) + 1;
+        const pbRefused = hasPbBeenRefused(poule, team, pb);
+        log.info('tirage', 'Réponse du problème %s pour l\'équipe %s dans la poule %s, ', pb, team, poule, ans ? 'accepté' : 'refusé');
+
+        if (getPbStatus(poule, team, pb) !== -2)
+            return log.info('tirage', 'rejet d\'un problème qui n\'étais pas en attente');
+
+        log.info('tirage', 'Changement du statut du problème: %s', pb);
+        changePbStatus(poule, team, pb, ans ? 1 : -1);
+        if (ans) {
+            tirages[poule].poule = tirages[poule].poule.filter(t => t !== team);
+        }
+        if (ans || !pbRefused) {
+            tirages[poule].poule.push(tirages[poule].poule.shift());
+            tirages[poule].team = tirages[poule].poule[0];
+        }
+
+        // TODO: Cas où le problème a déjà été refusé précédement
+        io.emit('tirages', tirages);
     });
 });
 
@@ -136,6 +161,7 @@ const getTirageObject = poules => {
             pb: poule.map(team => {
                 const obj = {
                     name: team,
+                    refused: [],
                 };
                 for (let p = 1; p <= problemes; p++) {
                     // 0 par défaut, -2 en attente, -1 refusé, 1 accpeté
@@ -143,7 +169,8 @@ const getTirageObject = poules => {
                 }
                 return obj;
             }),
-            team: poule[0]
+            team: poule[0],
+            poule,
         };
     });
     return tiragesObject;
@@ -176,7 +203,26 @@ const availProblems = poule => {
 const changePbStatus = (poule, team, pb, status) => {
     const index = tirages[poule].pb.findIndex(o => o.name === team);
     tirages[poule].pb[index]['p' + pb] = status;
+    if (status === -1) tirages[poule].pb[index].refused.push(pb);
 };
+
+/**
+ * Obtient le statut d'un problème
+ *
+ * @param {Number} poule
+ * @param {String} team
+ * @param {Number} pb
+ * @returns {Number} statut du problème
+ */
+const getPbStatus = (poule, team, pb) => {
+    const index = tirages[poule].pb.findIndex(o => o.name === team);
+    return tirages[poule].pb[index]['p' + pb];
+};
+
+const hasPbBeenRefused = (poule, team, pb) => {
+    const index = tirages[poule].pb.findIndex(o => o.name === team);
+    return tirages[poule].pb[index].refused.includes(pb);
+}
 
 setInterval(() => {
     io.emit('poulesValue', poulesValue);

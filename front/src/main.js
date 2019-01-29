@@ -8,20 +8,20 @@ import Vuetify from 'vuetify'
 import 'vuetify/dist/vuetify.min.css'
 import 'material-design-icons-iconfont'
 
-Vue.config.productionTip = false
+Vue.config.productionTip = false;
 
-Vue.use(Vuetify)
+Vue.use(Vuetify);
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _, next) => {
     if(to.path === '/') {
         store.commit('connected', {connected: false, trigram: ''})
         socket.disconnect();
         socket.connect();
     }
     next();
-})
+});
 
-const socket = io('http://localhost:8081')
+const socket = io('http://localhost:8081');
 
 Vue.use(VueSocketio, socket, { store });
 
@@ -29,4 +29,4 @@ new Vue({
     router,
     store,
     render: h => h(App)
-}).$mount('#app')
+}).$mount('#app');
