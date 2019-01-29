@@ -27,8 +27,7 @@ export default {
     props: ['poule'],
     data() {
         return {
-            headers: [{text: 'Nom d\'équipe', value: 'name', sortable: false}, {text: 'Nombre tiré', value: 'randnum', sortable: false}],
-            diceVisible: true
+            headers: [{text: 'Nom d\'équipe', value: 'name', sortable: false}, {text: 'Nombre tiré', value: 'randnum', sortable: false}]
         }
     },
     computed: {
@@ -42,11 +41,15 @@ export default {
                 poules.push(copy.splice(0, n));
             })
             return this.poule ? poules.map((e, i) => i === this.poule-1 ? e : []) : poules;
+        },
+        diceVisible () {
+            return !this.$store.state.poulesValue.find(e => e.name === this.$store.state.trigram);
         }
     },
     methods: {
         sendRand () {
-            this.diceVisible = false;
+            // This will be done by the server
+            // this.diceVisible = false;
             this.$socket.emit('poulesDice', Math.floor(Math.random() * 100))
         }
     },

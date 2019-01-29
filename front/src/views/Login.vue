@@ -41,16 +41,16 @@ export default {
         }
     },
     sockets: {
-        login ({ success }) {
+        login ({ trigram, success }) {
             this.loading = false
             this.error = !success
             if (!success) return
-            this.$router.push('/wait') // waiting room, wait for all the teams to be there
-            this.$store.commit('connected', true);
+            this.$router.replace('/wait') // waiting room, wait for all the teams to be there
+            this.$store.commit('connected', {connected: true, trigram});
         }
     },
     mounted () {
-        if(this.$store.state.spectator === true) this.$router.push('/');
+        if(this.$store.state.spectator === true) this.$router.replace('/');
     }
 }
 </script>

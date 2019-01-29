@@ -1,29 +1,123 @@
 <template>
     <div id="tirage">
-        <poules :poule="poule"></poules>
+        <!-- <poules :poule="poule"></poules> -->
+        <h2>Tirage de la poule {{pouleLetter}}</h2>
+        <v-data-table
+            :headers="headers"
+            :items="$store.state.tirages[poule].pb"
+            class="elevation-1 gap"
+            hide-actions
+            dark>
+            <template slot="items" slot-scope="props">
+                <td><span :class="$store.state.tirages[poule].team === props.item.name ? 'green--text text--accent-2' : ''">{{ props.item.name }}</span></td>
+                <td v-for="p in $store.state.problemes" :key="p">
+                    <v-icon dark
+                            :color="props.item['p' + p] === -1 ? 'deep-orange' : props.item['p' + p] === 1 ? 'green accent-2' : $store.state.tirages[poule].team === props.item.name ? 'white' : 'grey'"
+                            class="checkbox">
+                        {{props.item['p' + p] === 1 ? 'done': props.item['p' + p] === -1 ? 'close' : props.item['p' + p] === -2 ? 'radio_button_checked' : 'radio_button_unchecked'}}
+                    </v-icon>
+                </td>
+            </template>
+        </v-data-table>
+        <!-- Si c'est à l'équipe de tirer -->
+        <div v-show="$store.state.tirages[poule].team === $store.state.trigram">
+            <em>Cliquez sur le dé pour tirer un problème</em>
+            <img src="../assets/dice-6.svg" id="dice" @click="pickProblem()"/>
+        </div>
+        <v-dialog v-model="dialog" persistent max-width="290">
+            <!-- <v-btn slot="activator" color="primary" dark>Open Dialog</v-btn> -->
+            <v-card>
+                <v-card-title class="headline">Choisir ce problème ?</v-card-title>
+                <v-card-text>
+                    Vous avez tiré le problème 
+                    <div class="problem">{{ pb }}</div>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="red darken-1" flat @click="dialog = false && reject()">Refuser</v-btn>
+                    <v-btn color="green darken-1" flat @click="dialog = false && accept()">Accepter</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </div>
 </template>
 
 <script>
-import Poules from './Poules.vue';
-
 export default {
     name: 'tirage',
     props: ['poule'],
+    data() {
+        return {
+            headers: [
+                {
+                    text: 'Équipe',
+                    sortable: false,
+                    value: 'name'
+                },
+                // Il faut une colonne par problème
+                ...[...new Array(this.$store.state.problemes)].map((_, p) => ({
+                    sortable: false,
+                    text: 'P' + (p + 1),
+                    value: 'p' + (p + 1)
+                }))
+            ],
+            dialog: false,
+            pb: 0,
+        };
+    },
     computed: {
-        pouleLetter () {
-            // console.log(this.poule, this.poule + 65)
+        // Retourne la lettre correspondant à la n-ième poule
+        pouleLetter() {
             return String.fromCharCode(parseInt(this.poule) + 64);
         }
     },
-    components: {
-        Poules
+    methods: {
+        // Informe le serveur qu'on tire un problème
+        pickProblem() {
+            this.$socket.emit('pickProblem');
+        },
+        accept() {
+            this.$socket.emit('acceptProblem', true);
+        },
+        reject() {
+            this.$socket.emit('acceptProblem', false);
+        }
+    },
+    sockets: {
+        // Le serveur a tiré le problème
+        problemPicked({team, pb}) {
+            if(team !== this.$store.state.trigram) return;
+            this.dialog = true;
+            this.pb = pb;
+        }
     }
-}
+};
 </script>
 
 <style scoped>
 h2 {
     font-weight: normal;
+}
+
+table.v-table tbody td:not(:first-child) {
+    padding: 0 10px;
+}
+
+.gap {
+    margin-top: 50px;
+    margin-bottom: 50px;
+}
+
+#dice {
+    width: 60px;
+    height: 60px;
+    transition: all 0.3s;
+    cursor: pointer;
+    display: block;
+    margin: 10px auto;
+}
+
+#dice:hover {
+    transform: scale(1.5);
 }
 </style>

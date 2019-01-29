@@ -1,11 +1,6 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import InitialChoice from './views/InitialChoice.vue'
-import Login from './views/Login.vue'
-import Wait from './views/Wait.vue'
-import Poules from './views/Poules.vue'
-import Spectate from './views/Spectate.vue';
-import Tirage from './views/Tirage.vue'
 
 Vue.use(Router)
 
@@ -19,29 +14,33 @@ export default new Router({
             component: InitialChoice
         },
         {
+            path: '/home',
+            redirect: '/'
+        },
+        {
             path: '/login',
             name: 'login',
-            component: Login
+            component: () => import(/* webpack  : "login" */ './views/Login.vue')
         },
         {
             path: '/wait',
             name: 'wait',
-            component: Wait
+            component: () => import(/* webpackChunkName: "wait" */ './views/Wait.vue')
         },
         {
             path: '/poules',
             name: 'poules',
-            component: Poules
+            component: () => import(/* webpackChunkName: "poules" */ './views/Poules.vue')
         },
         {
             path: '/spectate',
             name: 'spectate',
-            component: Spectate
+            component: () => import(/* webpackChunkName: "spectate" */ './views/Spectate.vue')
         },
         {
             path: '/tirage/:poule',
             name: 'tirage',
-            component: Tirage,
+            component: () => import(/* webpack  : "tirage" */ './views/Tirage.vue'),
             props: true
         }
     ]

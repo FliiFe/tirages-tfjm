@@ -12,7 +12,18 @@ Vue.config.productionTip = false
 
 Vue.use(Vuetify)
 
-Vue.use(VueSocketio, io('http://localhost:8081'), { store });
+router.beforeEach((to, from, next) => {
+    if(to.path === '/') {
+        store.commit('connected', {connected: false, trigram: ''})
+        socket.disconnect();
+        socket.connect();
+    }
+    next();
+})
+
+const socket = io('http://localhost:8081')
+
+Vue.use(VueSocketio, socket, { store });
 
 new Vue({
     router,
