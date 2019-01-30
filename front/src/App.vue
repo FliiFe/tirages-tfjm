@@ -43,11 +43,15 @@ export default {
                     },
                     {
                         text: 'Formation des poules',
-                        disabled: !(this.$route.path.includes('poules') || this.$route.path.includes('tirage'))
+                        disabled: !(this.$route.path.includes('poules') || this.$route.path.includes('tirage') || this.$route.path.includes('spectate'))
                     },
                     {
                         text: 'Tirage des problèmes',
                         disabled: !(this.$store.state.poulesDone && this.$store.state.connected)
+                    },
+                    {
+                        text: 'Bilan',
+                        disabled: !this.$route.path.includes('spectate')
                     }
                 ];
             }

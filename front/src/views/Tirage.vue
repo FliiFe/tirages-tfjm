@@ -20,9 +20,12 @@
             </template>
         </v-data-table>
         <!-- Si c'est à l'équipe de tirer -->
-        <div v-show="$store.state.tirages[poule].team === $store.state.trigram && !dialog && !hasPendingProblem">
+        <div v-if="$store.state.tirages[poule].team === $store.state.trigram && !dialog && !hasPendingProblem">
             <em>Cliquez sur le dé pour tirer un problème</em>
             <img src="../assets/dice-6.svg" id="dice" @click="pickProblem()"/>
+        </div>
+        <div v-else-if="$store.state.tirages[poule].team.length >= 1">
+            <em>L'équipe <b>{{ $store.state.tirages[poule].team }}</b> tire un problème</em>
         </div>
         <v-dialog v-model="dialog" persistent max-width="290">
             <!-- <v-btn slot="activator" color="primary" dark>Open Dialog</v-btn> -->

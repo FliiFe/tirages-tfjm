@@ -66,6 +66,9 @@ export default new Vuex.Store({
         socket_tirage ({commit}, poule) {
             router.replace('/tirage/' + poule);
             commit('poulesDone', true);
+        },
+        socket_end () {
+            router.replace('/spectate')
         }
     },
     strict: true
