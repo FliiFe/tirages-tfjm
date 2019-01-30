@@ -1,4 +1,5 @@
-const app = require('express')();
+import express from 'express';
+const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 import log from 'npmlog';
@@ -19,9 +20,7 @@ log.info('config', 'teams: %s', teams.join(', '));
 // log.info('config', 'teamPassword: %s', passwordChecker);
 log.info('config', 'poules: %s', poulesConfig.join(' '));
 
-app.get('/', (_, res) => {
-    res.sendFile(__dirname + '/index.html');
-});
+app.use(express.static('../front/dist'));
 
 io.on('connection', socket => {
     log.info('socket', 'Nouvelle connexion');
@@ -129,7 +128,7 @@ io.on('connection', socket => {
     });
 });
 
-http.listen(port, () => {
+http.listen(port, '0.0.0.0', () => {
     log.info('http', 'Listening on *:' + port);
 });
 
