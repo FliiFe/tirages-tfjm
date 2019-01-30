@@ -3,6 +3,7 @@ const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 import log from 'npmlog';
+import path from 'path';
 
 import { teams, passwordChecker, poulesConfig, port, problemes } from './config.js';
 
@@ -14,13 +15,15 @@ let poulesValue = [];
 let poules = [];
 // Tableau des tirages par équipe
 let tirages = {};
-poulesConfig.forEach((_,i) => tirages[i+1] = {});
+poulesConfig.forEach((_, i) => tirages[i + 1] = {});
 
 log.info('config', 'teams: %s', teams.join(', '));
 // log.info('config', 'teamPassword: %s', passwordChecker);
 log.info('config', 'poules: %s', poulesConfig.join(' '));
 
 app.use(express.static('../front/dist'));
+
+app.get('*', (_, response) => response.sendFile(path.resolve('../front/dist/index.html')));
 
 io.on('connection', socket => {
     log.info('socket', 'Nouvelle connexion');
@@ -84,6 +87,7 @@ io.on('connection', socket => {
                 poules.push(poulesCopy.splice(0, el).map(({ name }) => name)));
             log.notice('poules', 'Fin du choix des poules. Résultats: %j', poules);
             tirages = getTirageObject(poules);
+            io.emit('tirages', tirages);
             // On prévient le frontend des équipes de passer au tirage de leur poule
             setTimeout(() => {
                 poules.forEach((teams, poule) => {
@@ -93,18 +97,18 @@ io.on('connection', socket => {
         }
     });
     socket.on('pickProblem', () => {
-        if(!isConnectedTeam(socket)) return log.info('tirage', 'rejet d\'un tirage');
+        if (!isConnectedTeam(socket)) return log.info('tirage', 'rejet d\'un tirage');
         const team = getNameFromSocketId(socket.id);
         const poule = poules.findIndex(p => p.includes(team)) + 1;
         log.info('tirage', 'Tirage pour l\'équipe %s, en poule %s', team, poule);
         const pbs = availProblems(poule);
         const pb = pbs[Math.floor(Math.random() * pbs.length)];
-        io.emit('problemPicked', {team, pb});
+        io.emit('problemPicked', { team, pb });
         changePbStatus(poule, team, pb, -2);
         io.emit('tirages', tirages);
     });
-    socket.on('acceptProblem', ({ans, pb}) => {
-        if(!isConnectedTeam(socket)) return log.info('tirage', 'rejet d\'un problème');
+    socket.on('acceptProblem', ({ ans, pb }) => {
+        if (!isConnectedTeam(socket)) return log.info('tirage', 'rejet d\'un problème');
         const team = getNameFromSocketId(socket.id);
         const poule = poules.findIndex(p => p.includes(team)) + 1;
         const pbRefused = hasPbBeenRefused(poule, team, pb);
@@ -118,12 +122,15 @@ io.on('connection', socket => {
         if (ans) {
             tirages[poule].poule = tirages[poule].poule.filter(t => t !== team);
         }
-        if (ans || !pbRefused) {
+        if (tirages[poule].poule.length === 0) {
+            log.notice('tirage', 'Fin du tirage pour la poule %s', String.fromCharCode(poule + 64));
+            poules[poule-1].forEach(t => io.to(t).emit('end'));
+            tirages[poule].team = '';
+        } else if (ans || !pbRefused) {
             tirages[poule].poule.push(tirages[poule].poule.shift());
             tirages[poule].team = tirages[poule].poule[0];
         }
 
-        // TODO: Cas où le problème a déjà été refusé précédement
         io.emit('tirages', tirages);
     });
 });
@@ -185,10 +192,10 @@ const availProblems = poule => {
     let taken = [];
     tirages[poule].pb.forEach(team => {
         Object.keys(team).filter(key => key.match(/p\d+/)).forEach(pkey => {
-            if(team[pkey] === 1) taken.push(parseInt(pkey.slice(1)));
+            if (team[pkey] === 1) taken.push(parseInt(pkey.slice(1)));
         });
     });
-    return [...new Array(problemes)].map((_, i) => i+1).filter(n => !taken.includes(n));
+    return [...new Array(problemes)].map((_, i) => i + 1).filter(n => !taken.includes(n));
 };
 
 /**
@@ -218,10 +225,18 @@ const getPbStatus = (poule, team, pb) => {
     return tirages[poule].pb[index]['p' + pb];
 };
 
+/**
+ * Permet de savoir si une équipe a déjà refusé un problème
+ *
+ * @param {Number} poule
+ * @param {String} team
+ * @param {Number} pb
+ * @returns {Boolean}
+ */
 const hasPbBeenRefused = (poule, team, pb) => {
     const index = tirages[poule].pb.findIndex(o => o.name === team);
     return tirages[poule].pb[index].refused.includes(pb);
-}
+};
 
 setInterval(() => {
     io.emit('poulesValue', poulesValue);
