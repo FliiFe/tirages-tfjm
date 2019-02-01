@@ -9,7 +9,8 @@
 export default {
     name: 'wait',
     mounted () {
-        this.$store.dispatch('returnHomeIfNecessary');
+        if(this.$store.state.spectator) return;
+        this.$store.dispatch('returnHomeIfNecessary')
         if(this.$store.state.connectedTeams.length === this.$store.state.total) this.$router.replace('/poules')
     }
 }

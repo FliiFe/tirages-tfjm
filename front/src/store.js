@@ -16,58 +16,59 @@ export default new Vuex.Store({
         problemes: 0,
         poulesDone: false,
         // Objet vide avec cinq poules par défaut pour éviter les erreurs dans la console.
-        tirages: {1: {}, 2:{}, 3:{}, 4: {}, 5: {}},
+        tirages: { 1: {}, 2: {}, 3: {}, 4: {}, 5: {} },
     },
     mutations: {
-        SOCKET_CONNECTED (state, connectedTeams) {
+        SOCKET_CONNECTED(state, connectedTeams) {
             state.connectedTeams = connectedTeams;
         },
-        SOCKET_TOTAL (state, total) {
+        SOCKET_TOTAL(state, total) {
             state.total = total;
         },
-        connected (state, {connected, trigram}) {
+        connected(state, { connected, trigram }) {
             state.connected = connected;
             state.trigram = trigram;
         },
-        SOCKET_POULESCONFIG (state, poulesConfig) {
+        SOCKET_POULESCONFIG(state, poulesConfig) {
             state.poulesConfig = poulesConfig
         },
-        SOCKET_POULESVALUE (state, poulesValue) {
+        SOCKET_POULESVALUE(state, poulesValue) {
             state.poulesValue = poulesValue;
         },
-        SOCKET_CONNECTEDSTATUS (state, connected) {
-            if(!connected) {
+        SOCKET_CONNECTEDSTATUS(state, connected) {
+            if (!connected) {
                 state.trigram = '';
                 state.poulesDone = false;
             }
             state.connected = connected;
             if (!router.currentRoute.path.includes('spectate')) router.replace('/')
         },
-        setSpectator (state, spectator) {
+        setSpectator(state, spectator) {
             state.spectator = spectator
         },
-        SOCKET_PROBLEMES (state, problemes) {
+        SOCKET_PROBLEMES(state, problemes) {
             state.problemes = problemes;
         },
-        poulesDone (state) {
+        poulesDone(state) {
             state.poulesDone = true;
         },
-        SOCKET_TIRAGES (state, tirages) {
+        SOCKET_TIRAGES(state, tirages) {
             state.tirages = tirages;
         }
     },
     actions: {
-        socket_poules () {
+        socket_poules() {
             router.replace('/poules')
         },
-        returnHomeIfNecessary (store) {
-           if(!store.state.connected) router.replace('/')
+        returnHomeIfNecessary(store) {
+            if (store.state.spectator) return;
+            if (!store.state.connected) router.replace('/')
         },
-        socket_tirage ({commit}, poule) {
+        socket_tirage({ commit }, poule) {
             router.replace('/tirage/' + poule);
             commit('poulesDone', true);
         },
-        socket_end () {
+        socket_end() {
             router.replace('/spectate')
         }
     },

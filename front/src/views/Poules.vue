@@ -48,7 +48,7 @@ export default {
     },
     methods: {
         sendRand () {
-            // This will be done by the server
+            // The server will take care of this
             // this.diceVisible = false;
             this.$socket.emit('poulesDice', Math.floor(Math.random() * 100))
         }

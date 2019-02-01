@@ -1,7 +1,7 @@
 <template>
     <div id="tirage">
         <!-- <poules :poule="poule"></poules> -->
-        <h2>Tirage de la poule {{pouleLetter}}</h2>
+        <h2 v-show="!spectate">Tirage de la poule {{pouleLetter}}</h2>
         <v-data-table
             :headers="headers"
             :items="$store.state.tirages[poule].pb"
@@ -20,7 +20,7 @@
             </template>
         </v-data-table>
         <!-- Si c'est à l'équipe de tirer -->
-        <div v-if="$store.state.tirages[poule].team === $store.state.trigram && !dialog && !hasPendingProblem">
+        <div v-if="!spectate && $store.state.tirages[poule].team === $store.state.trigram && !dialog && !hasPendingProblem">
             <em>Cliquez sur le dé pour tirer un problème</em>
             <img src="../assets/dice-6.svg" id="dice" @click="pickProblem()"/>
         </div>
@@ -48,7 +48,7 @@
 <script>
 export default {
     name: 'tirage',
-    props: ['poule'],
+    props: ['poule', 'spectate'],
     data() {
         return {
             headers: [
@@ -77,7 +77,7 @@ export default {
             let haspending = false;
             this.$store.state.tirages[this.poule].pb.forEach(team => {
                 for (let p = 1; p <= this.$store.state.problemes; p++) {
-                    if(team['p' + p] === -2) haspending = true;
+                    if(team['p' + p] === -2) haspending = p;
                 }
             });
             return haspending;
@@ -100,10 +100,15 @@ export default {
     sockets: {
         // Le serveur a tiré le problème
         problemPicked({team, pb}) {
+            if(this.spectate === true) return;
             if(team !== this.$store.state.trigram) return;
             this.dialog = true;
             this.pb = pb;
         }
+    },
+    mounted () {
+        // TODO: open dialog if problem pending
+        // if(this.hasPendingProblem) this.dialog = true;
     }
 };
 </script>
@@ -133,5 +138,8 @@ table.v-table tbody td:not(:first-child) {
 
 #dice:hover {
     transform: scale(1.5);
+}
+.problem {
+    font-size: 40px;
 }
 </style>
