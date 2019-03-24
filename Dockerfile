@@ -30,4 +30,6 @@ RUN npm run build
 
 EXPOSE 8081
 
+ENV OGRA_PWD orga
+
 CMD node dist/index.js

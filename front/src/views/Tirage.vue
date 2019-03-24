@@ -34,6 +34,13 @@
                 <v-card-text>
                     Vous avez tiré le problème 
                     <div class="problem">{{ pb }}</div>
+                    <div v-if="$store.state.problemes - 5 - refus.length >= 0">
+                        Il vous reste <span class="red--text">{{$store.state.problemes - 5 - refus.length}} refus</span>
+                    </div>
+                    <div v-else>
+                        <span class="red--text">Vous avez {{-$store.state.problemes + 5 + refus.length}} pénalité{{-$store.state.problemes + 5 + refus.length == 1 ? '' : 's'}}</span>
+                    </div>
+                    <!-- TODO: meme pb -->
                 </v-card-text>
                 <v-card-actions>
                     <v-spacer></v-spacer>
@@ -81,6 +88,9 @@ export default {
                 }
             });
             return haspending;
+        },
+        refus() {
+            return this.$store.state.trigram ? this.$store.state.tirages[this.poule].pb.find(t => t.name === this.$store.state.trigram).refused : [];
         }
     },
     methods: {

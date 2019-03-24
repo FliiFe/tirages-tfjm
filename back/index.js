@@ -4,8 +4,11 @@ const http = require('http').Server(app)
 const io = require('socket.io')(http)
 import log from 'npmlog'
 import path from 'path'
+import fs from 'fs'
+import basicAuth from 'express-basic-auth'
+import bodyParser from 'body-parser'
 
-import { teams, passwordChecker, poulesConfig, port, problemes } from './config.js'
+let { teams, poulesConfig, port, problemes } = JSON.parse(fs.readFileSync('./config.json'))
 
 // Teams connectées, avec leur socketid
 let connectedTeams = []
@@ -22,6 +25,31 @@ log.info('config', 'teams: %s', teams.join(', '))
 log.info('config', 'poules: %s', poulesConfig.join(' '))
 
 app.use(express.static('../front/dist'))
+app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.json())
+
+app.use('/orga', basicAuth({challenge: true, users: {orga: process.env.ORGA_PWD || 'orga'}}))
+
+app.use('/orga/data.json', (req, res) => {
+    res.send(JSON.stringify({ teams, poulesConfig, problemes }))
+})
+
+app.use('/orga/submit', (req, res) => {
+    if(req.body.teams && req.body.pb && req.body.poules) {
+        updateConfig({
+            port,
+            problemes: parseInt(req.body.pb),
+            poulesConfig: req.body.poules.toString().split(',').map(e => parseInt(e)),
+            teams: req.body.teams.split(',')
+        })
+        res.send('OK')
+    } else {
+        res.status(400).send('Failed.')
+        log.info('info', req.body)
+    }
+})
+
+app.use('/orga/', (_, res) => res.sendFile(path.resolve('./orga/index.html')))
 
 app.get('*', (_, response) => response.sendFile(path.resolve('../front/dist/index.html')))
 
@@ -122,9 +150,10 @@ io.on('connection', socket => {
         if (ans) {
             tirages[poule].poule = tirages[poule].poule.filter(t => t !== team)
         }
+
         if (tirages[poule].poule.length === 0) {
             log.notice('tirage', 'Fin du tirage pour la poule %s', String.fromCharCode(poule + 64))
-            poules[poule-1].forEach(t => io.to(t).emit('end'))
+            poules[poule - 1].forEach(t => io.to(t).emit('end'))
             tirages[poule].team = ''
         } else if (ans || !pbRefused) {
             tirages[poule].poule.push(tirages[poule].poule.shift())
@@ -138,6 +167,15 @@ io.on('connection', socket => {
 http.listen(port, '0.0.0.0', () => {
     log.info('http', 'Listening on *:' + port)
 })
+
+/**
+ * Fonction qui vérifie le mot de passe d'une équipe
+ *
+ * @param {String} password mot de passe à vérifier
+ * @param {String} team trigramme de l'équipe
+ * @returns {boolean} true si le mot de passe est bon, false sinon
+ */
+const passwordChecker = (password, team) => password.length >= team.length
 
 /**
  * Vérifie qu'une équipe est actuellement connectée
@@ -209,7 +247,8 @@ const availProblems = poule => {
 const changePbStatus = (poule, team, pb, status) => {
     const index = tirages[poule].pb.findIndex(o => o.name === team)
     tirages[poule].pb[index]['p' + pb] = status
-    if (status === -1) tirages[poule].pb[index].refused.push(pb)
+    if (status === -1
+        && !tirages[poule].pb[index].refused.includes(pb)) tirages[poule].pb[index].refused.push(pb)
 }
 
 /**
@@ -238,8 +277,49 @@ const hasPbBeenRefused = (poule, team, pb) => {
     return tirages[poule].pb[index].refused.includes(pb)
 }
 
-setInterval(() => {
+/**
+ * Envoie les objets au client
+ */
+const updateClientsObject = () => {
     io.emit('poulesValue', poulesValue)
     io.emit('connected', connectedTeams.map(({ name }) => name))
     io.emit('tirages', tirages)
-}, 5000)
+}
+
+/**
+ * Met à jour la config du serveur
+ *
+ * @param {Object} config Objet de config
+ */
+const updateConfig = (config) => {
+    restartTirage()
+    log.warn('config', 'Changement de la configuration !!')
+    log.warn('config', 'Les équipes sont maintenant %s', config.teams.join(', '))
+    log.warn('config', 'Il y a %s problèmes pour le tirage', config.problemes)
+    log.warn('config', 'Configuration des poules: ', config.poulesConfig)
+    return new Promise((res) => {
+        fs.writeFile('./config.json', JSON.stringify(config), err => {
+            if (err) log.error(err)
+            teams = config.teams
+            problemes = config.problemes
+            poulesConfig = config.poulesConfig
+            poulesConfig.forEach((_, i) => tirages[i + 1] = {})
+            res()
+        })
+    })
+}
+
+/**
+ * Redémarre le tirage en cours
+ *
+ */
+const restartTirage = () => {
+    connectedTeams = []
+    poulesValue = []
+    poules = []
+    tirages = {}
+    updateClientsObject()
+}
+
+// Met à jour les objets côté client
+setInterval(updateClientsObject, 5000)
