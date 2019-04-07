@@ -53,7 +53,7 @@ export default {
         };
     },
     mounted() {
-        fetch('http://localhost:8081/orga/data.json')
+        fetch('/orga/data.json')
             .then(r => r.json())
             .then(({ teams, poulesConfig, problemes, passwords }) => {
                 this.teams = teams;
