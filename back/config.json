@@ -1,1 +1,1 @@
-{"port":8081,"problemes":8,"poulesConfig":[3],"teams":["PAU","TRE","BER"]}
+{"port":8081,"problemes":8,"poulesConfig":[3],"teams":["PAU","TRE","BER"],"passwords":{"PAU":"paupwd","BER":"berpwd","TRE":"trepwd"}}

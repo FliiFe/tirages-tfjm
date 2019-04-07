@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "babel *.js -d dist",
+    "build": "babel *.js -d dist && cd ../orga && vue build orga.vue",
     "start": "npm run build && node dist/index.js",
-    "serve": "nodemon -i dist -x 'npm run start'"
+    "serve": "nodemon -i dist -i config.json -x 'npm run start'"
   },
   "author": "Théophile Cailliau",
   "license": "MIT",

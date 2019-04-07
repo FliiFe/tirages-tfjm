@@ -1,6 +1,9 @@
 FROM node:11
 WORKDIR /usr/src/app
 
+RUN su -c 'npm install -g @vue/cli @vue/cli-service-global'
+RUN vue --version
+
 RUN mkdir front
 RUN mkdir back
 
@@ -19,6 +22,7 @@ WORKDIR /usr/src/app
 
 COPY front front
 COPY back back
+COPY orga orga
 
 WORKDIR /usr/src/app/front
 

@@ -10,6 +10,9 @@ import bodyParser from 'body-parser'
 
 let { teams, poulesConfig, port, problemes } = JSON.parse(fs.readFileSync('./config.json'))
 
+let passwords = {}
+// Initialize with random password.
+teams.forEach(t => passwords[t] = Math.random().toString().slice(2))
 // Teams connectées, avec leur socketid
 let connectedTeams = []
 // Valeurs tirées par les équipes pour former les poules
@@ -24,24 +27,24 @@ log.info('config', 'teams: %s', teams.join(', '))
 // log.info('config', 'teamPassword: %s', passwordChecker);
 log.info('config', 'poules: %s', poulesConfig.join(' '))
 
+app.use((_, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*')
+    next()
+})
 app.use(express.static('../front/dist'))
-app.use(bodyParser.urlencoded({ extended: false }))
+// app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
-app.use('/orga', basicAuth({challenge: true, users: {orga: process.env.ORGA_PWD || 'orga'}}))
+app.use('/orga', basicAuth({ challenge: true, users: { orga: process.env.ORGA_PWD || 'orga' } }))
 
-app.use('/orga/data.json', (req, res) => {
-    res.send(JSON.stringify({ teams, poulesConfig, problemes }))
+app.use('/orga/data.json', (_, res) => {
+    // TODO: Don't give out passwords
+    res.send(JSON.stringify({ teams, poulesConfig, problemes, passwords }))
 })
 
 app.use('/orga/submit', (req, res) => {
-    if(req.body.teams && req.body.pb && req.body.poules) {
-        updateConfig({
-            port,
-            problemes: parseInt(req.body.pb),
-            poulesConfig: req.body.poules.toString().split(',').map(e => parseInt(e)),
-            teams: req.body.teams.split(',')
-        })
+    if (req.body.teams && req.body.problemes && req.body.poulesConfig) {
+        updateConfig(Object.assign({port}, req.body))
         res.send('OK')
     } else {
         res.status(400).send('Failed.')
@@ -49,7 +52,7 @@ app.use('/orga/submit', (req, res) => {
     }
 })
 
-app.use('/orga/', (_, res) => res.sendFile(path.resolve('./orga/index.html')))
+app.use('/orga/', express.static('../orga/dist'))
 
 app.get('*', (_, response) => response.sendFile(path.resolve('../front/dist/index.html')))
 
@@ -175,7 +178,7 @@ http.listen(port, '0.0.0.0', () => {
  * @param {String} team trigramme de l'équipe
  * @returns {boolean} true si le mot de passe est bon, false sinon
  */
-const passwordChecker = (password, team) => password.length >= team.length
+const passwordChecker = (password, team) => passwords[team] === password
 
 /**
  * Vérifie qu'une équipe est actuellement connectée
@@ -297,11 +300,13 @@ const updateConfig = (config) => {
     log.warn('config', 'Les équipes sont maintenant %s', config.teams.join(', '))
     log.warn('config', 'Il y a %s problèmes pour le tirage', config.problemes)
     log.warn('config', 'Configuration des poules: ', config.poulesConfig)
+    if(config.passwords) log.warn('config', 'Mots de passes:', config.passwords)
     return new Promise((res) => {
         fs.writeFile('./config.json', JSON.stringify(config), err => {
             if (err) log.error(err)
             teams = config.teams
             problemes = config.problemes
+            if (config.passwords) passwords = config.passwords
             poulesConfig = config.poulesConfig
             poulesConfig.forEach((_, i) => tirages[i + 1] = {})
             res()
