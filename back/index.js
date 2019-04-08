@@ -28,7 +28,7 @@ poulesConfig.forEach((_, i) => tirages[i + 1] = {})
 
 log.info('config', 'tournoi: %s', tournoi)
 log.info('config', 'teams: %s', teams.join(', '))
-// log.info('config', 'teamPassword: %s', passwordChecker);
+log.info('config', 'passwords:', passwords)
 log.info('config', 'poules: %s', poulesConfig.join(' '))
 
 // Allow CORS for testing purposes

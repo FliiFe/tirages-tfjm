@@ -1,10 +1,15 @@
 const http = require('http')
 const httpProxy = require('http-proxy')
+const fs = require('fs')
 
 const tournois = process.env.TOURNOIS.split(',')
 console.log(tournois)
 
 const proxy = httpProxy.createProxyServer({})
+
+const defaultPage = fs.readFileSync('./public/index.html', 'utf8').replace('##TOURNOIS', tournois.map(t => {
+    return `<a href="${t}/"> ${t.replace('-',' ')} </a>`
+}).join('\n'))
 
 const server = http.createServer(function (req, res) {
     const { url } = req
@@ -18,8 +23,8 @@ const server = http.createServer(function (req, res) {
         }
     })
     if (matched) return
-    res.writeHead(200, { 'Content-Type': 'text/plain' })
-    res.write('test')
+    res.writeHead(200, { 'Content-Type': 'text/html' })
+    res.write(defaultPage)
     res.end()
 })
 
