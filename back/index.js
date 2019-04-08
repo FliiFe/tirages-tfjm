@@ -1,17 +1,20 @@
 import express from 'express'
 const app = express()
 const http = require('http').Server(app)
-const io = require('socket.io')(http)
 import log from 'npmlog'
 import path from 'path'
 import fs from 'fs'
 import basicAuth from 'express-basic-auth'
 import bodyParser from 'body-parser'
 
-let { teams, poulesConfig, port, problemes } = JSON.parse(fs.readFileSync('./config.json'))
+const port = parseInt(process.argv[2]) || 8081
+const tournoi = process.argv[3] || 'front'
+const io = require('socket.io')(http, {path: '/' + tournoi + '/socket.io'})
+
+let { teams, poulesConfig, problemes } = JSON.parse(fs.readFileSync('./config.json'))
 
 let passwords = {}
-// Initialize with random password.
+// Mot de passe aléatoire, inutilisé.
 teams.forEach(t => passwords[t] = Math.random().toString().slice(2))
 // Teams connectées, avec leur socketid
 let connectedTeams = []
@@ -23,26 +26,29 @@ let poules = []
 let tirages = {}
 poulesConfig.forEach((_, i) => tirages[i + 1] = {})
 
+log.info('config', 'tournoi: %s', tournoi)
 log.info('config', 'teams: %s', teams.join(', '))
 // log.info('config', 'teamPassword: %s', passwordChecker);
 log.info('config', 'poules: %s', poulesConfig.join(' '))
 
-app.use((_, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*')
-    next()
-})
-app.use(express.static('../front/dist'))
+// Allow CORS for testing purposes
+// app.use((_, res, next) => {
+//     res.header('Access-Control-Allow-Origin', '*')
+//     next()
+// })
+
+app.use('/' + tournoi, express.static('../' + tournoi + '/dist'))
 // app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
-app.use('/orga', basicAuth({ challenge: true, users: { orga: process.env.ORGA_PWD || 'orga' } }))
+app.use('/' + tournoi + '/orga', basicAuth({ challenge: true, users: { orga: process.env.ORGA_PWD || 'orga' } }))
 
-app.use('/orga/data.json', (_, res) => {
+app.use('/' + tournoi + '/orga/data.json', (_, res) => {
     // TODO: Don't give out passwords
     res.send(JSON.stringify({ teams, poulesConfig, problemes, passwords }))
 })
 
-app.use('/orga/submit', (req, res) => {
+app.use('/' + tournoi + '/orga/submit', (req, res) => {
     if (req.body.teams && req.body.problemes && req.body.poulesConfig) {
         updateConfig(Object.assign({port}, req.body))
         res.send('OK')
@@ -52,9 +58,9 @@ app.use('/orga/submit', (req, res) => {
     }
 })
 
-app.use('/orga/', express.static('../orga/dist'))
+app.use('/' + tournoi + '/orga/', express.static('../orga/dist'))
 
-app.get('*', (_, response) => response.sendFile(path.resolve('../front/dist/index.html')))
+app.get('/' + tournoi + '/*', (_, response) => response.sendFile(path.resolve('../' + tournoi + '/dist/index.html')))
 
 io.on('connection', socket => {
     log.info('socket', 'Nouvelle connexion')

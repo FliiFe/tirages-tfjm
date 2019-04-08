@@ -21,7 +21,10 @@ router.beforeEach((to, _, next) => {
     next();
 });
 
-const socket = io(process.env.NODE_ENV === 'development' ? 'http://localhost:8081' : '/');
+console.log('/' + (process.env.VUE_APP_TOURNOI || '') + '/socket.io')
+const socket = io(process.env.NODE_ENV === 'development' ? 'http://localhost:8081' : '/', {
+    path: '/' + (process.env.VUE_APP_TOURNOI || '') + '/socket.io'
+});
 
 Vue.use(VueSocketio, socket, { store });
 

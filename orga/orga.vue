@@ -53,7 +53,7 @@ export default {
         };
     },
     mounted() {
-        fetch('/orga/data.json')
+        fetch('./data.json')
             .then(r => r.json())
             .then(({ teams, poulesConfig, problemes, passwords }) => {
                 this.teams = teams;
@@ -104,7 +104,7 @@ export default {
             reader.readAsText(file);
         },
         send() {
-            fetch('/orga/submit', {
+            fetch('./submit', {
                 method: 'post',
                 headers: {
                     'Content-Type': 'application/json'
