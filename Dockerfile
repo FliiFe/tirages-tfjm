@@ -36,7 +36,7 @@ RUN npm run build
 
 WORKDIR /usr/src/app
 
-EXPOSE 8081
+EXPOSE 8080
 
 ENV OGRA_PWD orga
 ENV TOURNOIS lille,lyon,nancy,paris-1,paris-2,rennes,toulouse,tours
