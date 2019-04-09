@@ -45,7 +45,7 @@ app.use('/' + tournoi + '/orga', basicAuth({ challenge: true, users: { orga: pro
 
 app.use('/' + tournoi + '/orga/data.json', (_, res) => {
     // TODO: Don't give out passwords
-    res.send(JSON.stringify({ teams, poulesConfig, problemes, passwords }))
+    res.send(JSON.stringify({ teams, poulesConfig, problemes, passwords, tournoi }))
 })
 
 app.use('/' + tournoi + '/orga/submit', (req, res) => {

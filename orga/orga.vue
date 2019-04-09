@@ -32,7 +32,7 @@
     <h2>Mots de passe</h2>Envoyer le fichier de mots de passes:
     <input type="file" @change="passUpdate($event)">
     <br>
-    <button @click="send()">Envoyer et redémarrer le tirage en cours</button>
+    <button @click="send()" class="submitbutton">Envoyer et redémarrer le tirage en cours</button>
   </div>
 </template>
 
@@ -49,17 +49,19 @@ export default {
                 BER: 'berpwd',
                 TRE: 'trepwd'
             },
-            alphabet: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+            alphabet: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+            tournoi: ''
         };
     },
     mounted() {
         fetch('./data.json')
             .then(r => r.json())
-            .then(({ teams, poulesConfig, problemes, passwords }) => {
+            .then(({ teams, poulesConfig, problemes, passwords, tournoi }) => {
                 this.teams = teams;
                 this.poulesConfig = poulesConfig;
                 this.problemes = problemes;
                 this.passwords = passwords;
+                this.tournoi = tournoi === 'front' ? 'dev' : tournoi
             })
             .catch(() => {
                 alert("Une erreur s'est produite. Merci de recharger la page.");
@@ -120,3 +122,60 @@ export default {
     }
 };
 </script>
+
+<style>
+html,body {
+    background: #1f1f1f;
+    color: white;
+}
+
+#app {
+    display: block;
+    margin: 0 auto;
+    width: 600px;
+}
+
+input[type=number], input[type=text] {
+    width: 600px;
+    background: #1f1f1f;
+    border: 1px solid white;
+    border-radius: 2px;
+    color: white;
+    padding: 16px;
+}
+
+h2 {
+    font-weight: normal;
+    font-size: 30px;
+}
+
+li {
+    margin: 10px auto;
+}
+
+li > button, .submitbutton {
+    background: #1f1f1f;
+    color: white;
+    border: 1px solid white;
+    border-radius: 2px;
+    padding: 8px 12px;
+    margin-right: 20px;
+    transition-property: background;
+    transition-duration: 200ms;
+}
+
+li > button:hover, .submitbutton:hover {
+    background: #3f3f3f;
+}
+
+.submitbutton {
+    display:block;
+    margin: 0 auto;
+    text-transform: uppercase;
+    margin-top: 30px;
+    margin-bottom: 30px;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 16px;
+}
+</style>

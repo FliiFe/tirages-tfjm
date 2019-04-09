@@ -1,8 +1,18 @@
 <template>
   <div class="about">
-      <p class="title">Tirage du tournoi de <span class="tournoi">{{tournoi.replace('-', ' ')}}</span></p>
+    <p class="title" v-if="tournoi !== 'finale'">
+      Tirage du tournoi de
+      <span class="tournoi">{{tournoi.replace('-', ' ')}}</span>
+    </p>
+    <p class="title" v-else>Tirage de la finale</p>
     <v-btn @click="$store.commit('setSpectator', true)" large dark outline to="/spectate">Spectateur</v-btn>
-    <v-btn @click="$store.commit('setSpectator', false)" large dark outline to="/login">Capitaine d'équipe</v-btn>
+    <v-btn
+      @click="$store.commit('setSpectator', false)"
+      large
+      dark
+      outline
+      to="/login"
+    >Capitaine d'équipe</v-btn>
   </div>
 </template>
 
@@ -11,10 +21,13 @@ export default {
     name: 'initial-choice',
     data() {
         return {
-            tournoi: process.env.VUE_APP_TOURNOI == 'front' ? 'Dév' : process.env.VUE_APP_TOURNOI
-        }
+            tournoi:
+                process.env.VUE_APP_TOURNOI == 'front'
+                    ? 'dev'
+                    : process.env.VUE_APP_TOURNOI
+        };
     }
-}
+};
 </script>
 
 <style scoped>
