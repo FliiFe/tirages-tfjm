@@ -8,10 +8,28 @@ Ce repo contient le site de tirage au sort des problèmes pour le <img src=./fro
 
 ## Installation et configuration
 
-La mise en ligne se fait avec une image docker. Il suffit de modifier les variables d'environnement secrètes dans le `Dockerfile` (sauf si elles sont définies au lancement du container), et de build le Dockerfile.
-En suite, l'image sert le site sur le port `8081`.
+La mise en ligne se fait avec une image docker. Il y a deux choses à modifier avant de compiler l'image: les variables d'environnement `ORGA_PWD` et `TOURNOIS`
 
-La configuration initiale se fait dans le fichier `./back/config.json`, qui contient les équipes présentes, le nombre de problèmes, les configurations de poules et le port d'écoute du backend. Les trois premières valeurs peuvent aussi être modifiées via la page `/orga` (le mot de passe est celui définit dans le `Dockerfile`). En pratique, il est quasiment inutile d'utiliser le fichier `config.json`, puisque toute la configuration nécessaire peut se faire directement via une page web.
+```Dockerfile
+ENV OGRA_PWD orga # le mot de passe organisateur
+ENV TOURNOIS lille,lyon,nancy,paris-1,paris-2,rennes,toulouse,tours #La liste des villes, sans espace ni majuscules
+```
+
+La première variable peut être définie au runtime, mais la seconde doit impérativement être correctement définie au buildtime.
+
+L'image se build avec
+
+```bash
+docker build . -t tfjm/tirages # Ou n'importe quel autre nom d'image
+```
+
+L'image sert le site sur le port `8080`. Pour la lancer en ligne de commande,
+
+```bash
+docker run -p 8080:8080 tjfm/tirages # Le nom doit correspondre à celui du build
+```
+
+Une fois l'image lancée, la page d'accueil permet d'accéder à chaque tirage dans `/<tournoi>/` (par exemple, `paris-1`). La configuration de chaque tournoi se fait dans la page `/<tournoi>/orga/` (par exemple, `/lille/orga/`). Sur cette page, on peut configurer le nombre de poules, les équipes présentes, le nombre de problèmes et les mots de passe de chaque équipe (voir ci-dessous pour la configuration des mots de passes).
 
 ## Gestion des mots de passe
 
