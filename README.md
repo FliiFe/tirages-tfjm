@@ -31,6 +31,22 @@ docker run -p 8080:8080 tjfm/tirages # Le nom doit correspondre à celui du buil
 
 Une fois l'image lancée, la page d'accueil permet d'accéder à chaque tirage dans `/<tournoi>/` (par exemple, `paris-1`). La configuration de chaque tournoi se fait dans la page `/<tournoi>/orga/` (par exemple, `/lille/orga/`). Sur cette page, on peut configurer le nombre de poules, les équipes présentes, le nombre de problèmes et les mots de passe de chaque équipe (voir ci-dessous pour la configuration des mots de passes).
 
+## Page de configuration
+
+La page de configuration est composée de *quatre* sections:
+- **Équipes**
+- **Poules**
+- **Problèmes**
+- **Mots de passe**
+
+Dans la section **Équipes**, il est possible d'ajouter et enlever des équipes par leur trigramme, et si le tirage correspond au tour 2, une case à cocher permet de renseigner les problèmes tirés par chaque équipe au tour 1 (problèmes que les équipes ne pourrons plus tirer).
+
+Dans la section **Poules**, il est possible d'éditer la configuration des poules. **_Cependant, la page se charge de calculer automatiquement la configuration la plus probable_**. Ne la modifiez donc qu'en cas de besoin exceptionnel.
+
+La section **Problèmes** ne contient qu'un champ, le nombre de problème à tirer.
+
+La section **Mots de passe** permet d'envoyer un fichier de mots de passe, comme décrit ci-dessous.
+
 ## Gestion des mots de passe
 
 Chaque équipe dispose d'un mot de passe (généré pour l'édition 2019, récupéré depuis le site d'inscription pour les éditions ultérieures). Le site de tirage accepte les mots de passe sous la forme d'un fichier `json` sous la forme
@@ -43,9 +59,11 @@ Chaque équipe dispose d'un mot de passe (généré pour l'édition 2019, récup
 }
 ```
 
-Le fichier doit être fourni lors de la configuration du tournoi via la page `/orga` (dans la section **Mots de passe**)
+Le fichier doit être fourni lors de la configuration du tournoi via la page `/<tournoi>/orga` (dans la section **Mots de passe**)
 
 ## À faire
 
-- [ ] Gérer les poules à 5 équipes
+- [ ] Exporter les résultats
+- [x] Gérer le deuxième tour
+- [x] Gérer les poules à 5 équipes
 - [x] Générer des mots de passes uniques à chaque équipe

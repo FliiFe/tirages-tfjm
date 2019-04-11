@@ -3,7 +3,6 @@ const app = express()
 const http = require('http').Server(app)
 import log from 'npmlog'
 import path from 'path'
-import fs from 'fs'
 import basicAuth from 'express-basic-auth'
 import bodyParser from 'body-parser'
 
@@ -11,11 +10,12 @@ const port = parseInt(process.argv[2]) || 8081
 const tournoi = process.argv[3] || 'front'
 const io = require('socket.io')(http, {path: '/' + tournoi + '/socket.io'})
 
-let { teams, poulesConfig, problemes } = JSON.parse(fs.readFileSync('./config.json'))
-
+let teams = []
+let poulesConfig = []
+let problemes = 8
 let passwords = {}
-// Mot de passe aléatoire, inutilisé.
-teams.forEach(t => passwords[t] = Math.random().toString().slice(2))
+let tour2 = false
+let tour2exclusion = {}
 // Teams connectées, avec leur socketid
 let connectedTeams = []
 // Valeurs tirées par les équipes pour former les poules
@@ -45,12 +45,12 @@ app.use('/' + tournoi + '/orga', basicAuth({ challenge: true, users: { orga: pro
 
 app.use('/' + tournoi + '/orga/data.json', (_, res) => {
     // TODO: Don't give out passwords
-    res.send(JSON.stringify({ teams, poulesConfig, problemes, passwords, tournoi }))
+    res.send(JSON.stringify({ teams, poulesConfig, problemes, passwords, tournoi, tour2, tour2exclusion }))
 })
 
 app.use('/' + tournoi + '/orga/submit', (req, res) => {
     if (req.body.teams && req.body.problemes && req.body.poulesConfig) {
-        updateConfig(Object.assign({port}, req.body))
+        updateConfig(req.body)
         res.send('OK')
     } else {
         res.status(400).send('Failed.')
@@ -134,11 +134,14 @@ io.on('connection', socket => {
         }
     })
     socket.on('pickProblem', () => {
+        // TODO: Poule de 5 ?
         if (!isConnectedTeam(socket)) return log.info('tirage', 'rejet d\'un tirage')
         const team = getNameFromSocketId(socket.id)
         const poule = poules.findIndex(p => p.includes(team)) + 1
         log.info('tirage', 'Tirage pour l\'équipe %s, en poule %s', team, poule)
-        const pbs = availProblems(poule)
+        // On enlève l'éventuel problème du tour 1. Note: on utilise != et pas !== pour la coercion de type (tour2exclusion[team] est un String)
+        const pbs = tour2 ? availProblems(poule).filter(p => p != tour2exclusion[team]) : availProblems(poule)
+        log.info('tirage', 'Problèmes disponibles: %s', pbs.join(', '))
         const pb = pbs[Math.floor(Math.random() * pbs.length)]
         io.emit('problemPicked', { team, pb })
         changePbStatus(poule, team, pb, -2)
@@ -229,6 +232,16 @@ const getTirageObject = poules => {
     return tiragesObject
 }
 
+
+/**
+ * Compte le nombre d'occurrences de `el` dans `arr`
+ *
+ * @param {Array} arr liste d'éléments
+ * @param el élément à compter
+ * @returns {Number} nombre d'occurences
+ */
+const count = (arr, el) => arr.reduce((a, v) => v == el ? a + 1 : a, 0)
+
 /**
  * Retourne les problèmes disponibles sur une poule donnée
  *
@@ -242,7 +255,15 @@ const availProblems = poule => {
             if (team[pkey] === 1) taken.push(parseInt(pkey.slice(1)))
         })
     })
-    return [...new Array(problemes)].map((_, i) => i + 1).filter(n => !taken.includes(n))
+    const pblist = [...new Array(problemes)].map((_, i) => i + 1) 
+    if(tirages[poule].pb.length === 5) {
+        log.info('tirage', 'Les problemes déjà tirés sont: %s', taken.join(', '))
+        if(!pblist.some(p => count(taken, p) >= 2)) {
+            // console.log('pas encore 2 pb identiques')
+            return pblist.filter(n => count(taken, n) <= 1)
+        }
+    }
+    return pblist.filter(n => !taken.includes(n))
 }
 
 /**
@@ -293,6 +314,9 @@ const updateClientsObject = () => {
     io.emit('poulesValue', poulesValue)
     io.emit('connected', connectedTeams.map(({ name }) => name))
     io.emit('tirages', tirages)
+    io.emit('problemes', problemes)
+    io.emit('total', teams.length)
+    io.emit('poulesConfig', poulesConfig)
 }
 
 /**
@@ -307,17 +331,13 @@ const updateConfig = (config) => {
     log.warn('config', 'Il y a %s problèmes pour le tirage', config.problemes)
     log.warn('config', 'Configuration des poules: ', config.poulesConfig)
     if(config.passwords) log.warn('config', 'Mots de passes:', config.passwords)
-    return new Promise((res) => {
-        fs.writeFile('./config.json', JSON.stringify(config), err => {
-            if (err) log.error(err)
-            teams = config.teams
-            problemes = config.problemes
-            if (config.passwords) passwords = config.passwords
-            poulesConfig = config.poulesConfig
-            poulesConfig.forEach((_, i) => tirages[i + 1] = {})
-            res()
-        })
-    })
+    teams = config.teams
+    problemes = config.problemes
+    if (config.passwords) passwords = config.passwords
+    poulesConfig = config.poulesConfig
+    poulesConfig.forEach((_, i) => tirages[i + 1] = {})
+    tour2 = !!config.tour2
+    tour2exclusion = config.tour2exclusion
 }
 
 /**

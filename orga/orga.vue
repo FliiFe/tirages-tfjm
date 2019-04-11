@@ -1,6 +1,7 @@
 <template>
   <div id="app">
     <h2>Équipes</h2>
+    <div class="tour2"><input type="checkbox" v-model="tour2" /> Tirage du second tour</div>
     <input
       type="text"
       placeholder="Ajouter une équipe (trigramme)"
@@ -11,6 +12,7 @@
       <li v-for="team in teams" :key="team">
         <button @click="delTeam(team)">×</button>
         {{team}}
+        <input type="number" min=1 placeholder="Problème du tour 1" :max="problemes" v-model="tour2exclusion[team]" v-if="tour2" class="exclusion">
       </li>
     </ul>
     <h2>Poules</h2>
@@ -18,7 +20,7 @@
       type="number"
       placeholder="Ajouter une poule (nombre d'équipes)"
       @keyup.enter="addPoule($event.target.value); $event.target.value = ''"
-      max="4"
+      max="5"
       min="3"
     >
     <ul>
@@ -50,18 +52,22 @@ export default {
                 TRE: 'trepwd'
             },
             alphabet: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
-            tournoi: ''
+            tournoi: '',
+            tour2: false,
+            tour2exclusion: {}
         };
     },
     mounted() {
         fetch('./data.json')
             .then(r => r.json())
-            .then(({ teams, poulesConfig, problemes, passwords, tournoi }) => {
+            .then(({ teams, poulesConfig, problemes, passwords, tournoi, tour2, tour2exclusion }) => {
                 this.teams = teams;
                 this.poulesConfig = poulesConfig;
                 this.problemes = problemes;
                 this.passwords = passwords;
                 this.tournoi = tournoi === 'front' ? 'dev' : tournoi
+                this.tour2 = tour2
+                this.tour2exclusion = tour2exclusion
             })
             .catch(() => {
                 alert("Une erreur s'est produite. Merci de recharger la page.");
@@ -91,11 +97,16 @@ export default {
                     this.poulesConfig = '3'
                         .repeat(Math.floor(nteams / 3))
                         .split('');
-                } else {
+                } else if (nteams % 3 == 1){
                     this.poulesConfig = '3'
                         .repeat(Math.floor(nteams / 3) - 1)
                         .split('')
                         .concat([4]);
+                } else {
+                    this.poulesConfig = '3'
+                        .repeat(Math.floor(nteams / 3) - 1)
+                        .split('')
+                        .concat([5]);
                 }
             }
         },
@@ -106,6 +117,24 @@ export default {
             reader.readAsText(file);
         },
         send() {
+            let failed = false
+            if(this.tour2 && !this.teams.every(t => this.tour2exclusion[t] > 0)) {
+                alert('Tous les problèmes du tour 1 doivent être définis pour commencer le tour 2')
+                failed = true
+            }
+            if(this.poulesConfig.reduce((a, v) => a + v) != this.teams.length) {
+                alert('La configuration des poules ne correspond pas au nombre d\'équipes')
+                failed = true
+            }
+            if(!this.teams.every(t => t.length === 3)) {
+                alert('Toutes les trigrammes doivent contenir exactement trois lettres')
+                failed = true
+            }
+            if(!this.teams.every(t => this.passwords[t] && this.passwords[t].length > 0)) {
+                alert('La liste des mots de passe est incomplète.')
+                failed = true
+            }
+            if (failed) return
             fetch('./submit', {
                 method: 'post',
                 headers: {
@@ -115,8 +144,15 @@ export default {
                     problemes: parseInt(this.problemes),
                     poulesConfig: this.poulesConfig.map(e => parseInt(e)),
                     teams: this.teams,
-                    passwords: this.passwords
+                    passwords: this.passwords,
+                    tour2: this.tour2,
+                    tour2exclusion: this.tour2exclusion
                 })
+            }).then(() => {
+                alert('Envoyé avec succès')
+            }).catch(e => {
+                alert('Erreur lors de l\'envoi.')
+                console.trace(e)
             });
         }
     }
@@ -177,5 +213,11 @@ li > button:hover, .submitbutton:hover {
     font-size: 16px;
     font-weight: bold;
     padding: 16px;
+}
+
+input.exclusion {
+    display: inline-block;
+    margin-left: 50px;
+    width: 200px;
 }
 </style>
