@@ -61,6 +61,10 @@ Chaque équipe dispose d'un mot de passe (généré pour l'édition 2019, récup
 
 Le fichier doit être fourni lors de la configuration du tournoi via la page `/<tournoi>/orga` (dans la section **Mots de passe**)
 
+## Logs
+
+Les logs sont disponibles sur la page `/<tournoi>/orga/log` (requiert l'authentification organisateur, peut contenir des données sensibles)
+
 ## À faire
 
 - [ ] Exporter les résultats
