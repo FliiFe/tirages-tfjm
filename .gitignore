@@ -3,3 +3,4 @@
 **/.tern_port
 */dist
 **/dist
+**/*.log

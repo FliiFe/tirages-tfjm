@@ -1,14 +1,24 @@
 import express from 'express'
-const app = express()
-const http = require('http').Server(app)
 import log from 'npmlog'
 import path from 'path'
 import basicAuth from 'express-basic-auth'
 import bodyParser from 'body-parser'
+import fs from 'fs'
+
+log.on('log', ({ level, prefix, message }) => {
+    fs.appendFile('output.log', `${level} ${prefix} ${message}\n`, e => {
+        if (e) console.trace(e)
+    })
+})
+
+fs.unlink('output.log', e => { if (e) console.trace(e) })
+
+const app = express()
+const http = require('http').Server(app)
 
 const port = parseInt(process.argv[2]) || 8081
 const tournoi = process.argv[3] || 'front'
-const io = require('socket.io')(http, {path: '/' + tournoi + '/socket.io'})
+const io = require('socket.io')(http, { path: '/' + tournoi + '/socket.io' })
 
 let teams = []
 let poulesConfig = []
@@ -26,10 +36,8 @@ let poules = []
 let tirages = {}
 poulesConfig.forEach((_, i) => tirages[i + 1] = {})
 
+log.info('tirage', 'Démarrage du serveur.')
 log.info('config', 'tournoi: %s', tournoi)
-log.info('config', 'teams: %s', teams.join(', '))
-log.info('config', 'passwords:', passwords)
-log.info('config', 'poules: %s', poulesConfig.join(' '))
 
 // Allow CORS for testing purposes
 // app.use((_, res, next) => {
@@ -44,8 +52,11 @@ app.use(bodyParser.json())
 app.use('/' + tournoi + '/orga', basicAuth({ challenge: true, users: { orga: process.env.ORGA_PWD || 'orga' } }))
 
 app.use('/' + tournoi + '/orga/data.json', (_, res) => {
-    // TODO: Don't give out passwords
     res.send(JSON.stringify({ teams, poulesConfig, problemes, passwords, tournoi, tour2, tour2exclusion }))
+})
+
+app.use('/' + tournoi + '/orga/log', (_, res) => {
+    res.sendFile(path.resolve('./output.log'))
 })
 
 app.use('/' + tournoi + '/orga/submit', (req, res) => {
@@ -255,10 +266,10 @@ const availProblems = poule => {
             if (team[pkey] === 1) taken.push(parseInt(pkey.slice(1)))
         })
     })
-    const pblist = [...new Array(problemes)].map((_, i) => i + 1) 
-    if(tirages[poule].pb.length === 5) {
+    const pblist = [...new Array(problemes)].map((_, i) => i + 1)
+    if (tirages[poule].pb.length === 5) {
         log.info('tirage', 'Les problemes déjà tirés sont: %s', taken.join(', '))
-        if(!pblist.some(p => count(taken, p) >= 2)) {
+        if (!pblist.some(p => count(taken, p) >= 2)) {
             // console.log('pas encore 2 pb identiques')
             return pblist.filter(n => count(taken, n) <= 1)
         }
@@ -330,7 +341,7 @@ const updateConfig = (config) => {
     log.warn('config', 'Les équipes sont maintenant %s', config.teams.join(', '))
     log.warn('config', 'Il y a %s problèmes pour le tirage', config.problemes)
     log.warn('config', 'Configuration des poules: ', config.poulesConfig)
-    if(config.passwords) log.warn('config', 'Mots de passes:', config.passwords)
+    if (config.passwords) log.warn('config', 'Mots de passes:', config.passwords)
     teams = config.teams
     problemes = config.problemes
     if (config.passwords) passwords = config.passwords
