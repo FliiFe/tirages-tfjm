@@ -4,15 +4,17 @@
 
 # Tirage des problèmes
 
-Ce repo contient le site de tirage au sort des problèmes pour le <img src=./front/src/assets/logo_dark.svg height=17>.
+Ce repo contient le site de tirage au sort des problèmes pour le <img src=./front/src/assets/logo_dark.svg height=18>.
 
 ## Installation et configuration
 
 La mise en ligne se fait avec une image docker. Il y a deux choses à modifier avant de compiler l'image: les variables d'environnement `ORGA_PWD` et `TOURNOIS`
 
 ```Dockerfile
-ENV OGRA_PWD orga # le mot de passe organisateur
-ENV TOURNOIS lille,lyon,nancy,paris-1,paris-2,rennes,toulouse,tours #La liste des villes, sans espace ni majuscules
+# Le mot de passe organisateur
+ENV OGRA_PWD orga
+# La liste des villes, sans espace ni majuscules
+ENV TOURNOIS lille,lyon,nancy,paris-1,paris-2,rennes,toulouse,tours
 ```
 
 La première variable peut être définie au runtime, mais la seconde doit impérativement être correctement définie au buildtime.
@@ -34,6 +36,7 @@ Une fois l'image lancée, la page d'accueil permet d'accéder à chaque tirage d
 ## Page de configuration
 
 La page de configuration est composée de *quatre* sections:
+
 - **Équipes**
 - **Poules**
 - **Problèmes**
@@ -65,9 +68,15 @@ Le fichier doit être fourni lors de la configuration du tournoi via la page `/<
 
 Les logs sont disponibles sur la page `/<tournoi>/orga/log` (requiert l'authentification organisateur, peut contenir des données sensibles)
 
-## À faire
+## Exporter les résultats
 
-- [ ] Exporter les résultats
-- [x] Gérer le deuxième tour
-- [x] Gérer les poules à 5 équipes
-- [x] Générer des mots de passes uniques à chaque équipe
+Depuis la page organisateur, il y a deux boutons: l'un pour exporter au format `json` et l'autre au format `xlsx`. Ce dernier peut être ouvert par Google Sheets/Libre Office/Excel, et est donc le plus pratique pour obtenir les résultats. Le format `json` permet d'exporter les valeurs du serveur dans leur format natif. Par conséquent, il est recommandé de télécharger un exemplaire des données en `json` ainsi qu'un exemplaire en `xlsx` (en cas de problème avec le second format, le premier format permet de récupérer les informations)
+
+**N'exportez le résultat du tirage qu'à la fin du tirage !** Exporter avant peut provoquer des erreurs. Pour connaitre l'avancée du tirage, rendez-vous sur la page spectateur avec le bouton *Voir le déroulement du tirage*.
+
+<p align="center">
+    ![Exemple de feuille Excel](./screenshots/ex-spreadsheet.png)
+</p>
+<p align="center">
+    Exemple de feuille Excel exportée
+</p>
