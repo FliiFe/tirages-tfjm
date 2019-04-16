@@ -75,7 +75,7 @@ Depuis la page organisateur, il y a deux boutons: l'un pour exporter au format `
 **N'exportez le résultat du tirage qu'à la fin du tirage !** Exporter avant peut provoquer des erreurs. Pour connaitre l'avancée du tirage, rendez-vous sur la page spectateur avec le bouton *Voir le déroulement du tirage*.
 
 <p align="center">
-    ![Exemple de feuille Excel](./screenshots/ex-spreadsheet.png)
+    <img src=./screenshots/ex-spreadsheet.png />
 </p>
 <p align="center">
     Exemple de feuille Excel exportée
