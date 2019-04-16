@@ -4,6 +4,7 @@ import path from 'path'
 import basicAuth from 'express-basic-auth'
 import bodyParser from 'body-parser'
 import fs from 'fs'
+import spreadSheetFromResult from './spreadsheet.js'
 
 log.on('log', ({ level, prefix, message }) => {
     fs.appendFile('output.log', `${level} ${prefix} ${message}\n`, e => {
@@ -59,10 +60,13 @@ app.use('/' + tournoi + '/orga/log', (_, res) => {
     res.sendFile(path.resolve('./output.log'))
 })
 
-app.use('/' + tournoi + '/orga/result.json', (_, res) => res.send(JSON.stringify({tirages, poules, poulesValue})))
+app.use('/' + tournoi + '/orga/result.json', (_, res) => res.send(JSON.stringify({ tirages, poules, poulesValue, poulesConfig, problemes, tour2, tour2exclusion, teams })))
 
-app.use('/' + tournoi + '/orga/result.csv', (_, res) => {
-    // TODO: Implement this.
+app.use('/' + tournoi + '/orga/result.xlsx', (_, res) => {
+    const sp = spreadSheetFromResult({ tirages, poules, poulesValue, poulesConfig, problemes, tour2, tour2exclusion, teams })
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats')
+    res.setHeader('Content-Disposition', 'attachment; filename=' + tournoi + '.xlsx')
+    sp.xlsx.write(res).then(() => res.end())
 })
 
 app.use('/' + tournoi + '/orga/submit', (req, res) => {

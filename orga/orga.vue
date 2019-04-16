@@ -36,6 +36,8 @@
     <br>
     <button @click="send()" class="submitbutton">Envoyer et redémarrer le tirage en cours</button>
     <a target="blank" href="../" class="tirage">Voir le déroulement du tirage</a>
+    <a target="blank" href="result.xlsx" class="tirage">Résultats dans une feuille de calcul</a>
+    <a target="blank" href="result.json" class="tirage">Résultats au format json</a>
   </div>
 </template>
 
