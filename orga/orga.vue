@@ -35,6 +35,7 @@
     <input type="file" @change="passUpdate($event)">
     <br>
     <button @click="send()" class="submitbutton">Envoyer et redémarrer le tirage en cours</button>
+    <a target="blank" href="../" class="tirage">Voir le déroulement du tirage</a>
   </div>
 </template>
 
@@ -122,7 +123,7 @@ export default {
                 alert('Tous les problèmes du tour 1 doivent être définis pour commencer le tour 2')
                 failed = true
             }
-            if(this.poulesConfig.reduce((a, v) => a + v) != this.teams.length) {
+            if(this.poulesConfig.reduce((a, v) => a + parseInt(v), 0) != this.teams.length) {
                 alert('La configuration des poules ne correspond pas au nombre d\'équipes')
                 failed = true
             }
@@ -160,9 +161,11 @@ export default {
 </script>
 
 <style>
+@import url('https://fonts.googleapis.com/css?family=Roboto');
 html,body {
     background: #1f1f1f;
     color: white;
+    font-family: Roboto;
 }
 
 #app {
@@ -172,6 +175,8 @@ html,body {
 }
 
 input[type=number], input[type=text] {
+    font-family: Roboto;
+    font-size: 16px;
     width: 600px;
     background: #1f1f1f;
     border: 1px solid white;
@@ -189,7 +194,9 @@ li {
     margin: 10px auto;
 }
 
-li > button, .submitbutton {
+li > button, .submitbutton, a.tirage {
+    font-family: Roboto;
+    font-size: 16px;
     background: #1f1f1f;
     color: white;
     border: 1px solid white;
@@ -200,22 +207,27 @@ li > button, .submitbutton {
     transition-duration: 200ms;
 }
 
-li > button:hover, .submitbutton:hover {
+li > button:hover, .submitbutton:hover, a.tirage:hover {
     background: #3f3f3f;
 }
 
-.submitbutton {
+.submitbutton, a.tirage {
     display:block;
     margin: 0 auto;
     text-transform: uppercase;
     margin-top: 30px;
     margin-bottom: 30px;
-    font-size: 16px;
-    font-weight: bold;
     padding: 16px;
+    text-align: center;
+    font-family: Roboto;
+    font-size: 16px;
+    text-decoration: none;
+    width: fit-content;
 }
 
 input.exclusion {
+    font-family: Roboto;
+    font-size: 16px;
     display: inline-block;
     margin-left: 50px;
     width: 200px;
