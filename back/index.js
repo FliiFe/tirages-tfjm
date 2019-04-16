@@ -59,6 +59,12 @@ app.use('/' + tournoi + '/orga/log', (_, res) => {
     res.sendFile(path.resolve('./output.log'))
 })
 
+app.use('/' + tournoi + '/orga/result.json', (_, res) => res.send(JSON.stringify({tirages, poules, poulesValue})))
+
+app.use('/' + tournoi + '/orga/result.csv', (_, res) => {
+    // TODO: Implement this.
+})
+
 app.use('/' + tournoi + '/orga/submit', (req, res) => {
     if (req.body.teams && req.body.problemes && req.body.poulesConfig) {
         updateConfig(req.body)
