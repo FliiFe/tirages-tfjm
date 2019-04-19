@@ -17,6 +17,8 @@ export default new Vuex.Store({
         poulesDone: false,
         // Objet vide avec cinq poules par défaut pour éviter les erreurs dans la console.
         tirages: { 1: {}, 2: {}, 3: {}, 4: {}, 5: {} },
+        customPoules: false,
+        descPoules: []
     },
     mutations: {
         SOCKET_CONNECTED(state, connectedTeams) {
@@ -54,6 +56,10 @@ export default new Vuex.Store({
         },
         SOCKET_TIRAGES(state, tirages) {
             state.tirages = tirages;
+        },
+        SOCKET_CUSTOMPOULES(state, {customPoules, descPoules}) {
+            state.customPoules = customPoules
+            state.descPoules = descPoules
         }
     },
     actions: {

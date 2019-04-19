@@ -35,26 +35,39 @@ export default {
             return this.$store.state.poulesValue.slice(0).sort(({randnum: a}, {randnum: b}) => a-b)
         },
         poules () {
-            let copy = this.sorted.slice(0);
+            let copy = this.sorted.slice(0)
+            if(this.$store.state.customPoules) {
+                const poules = []
+                this.$store.state.descPoules.forEach(pouledesc => {
+                    const poule = []
+                    pouledesc.forEach(t => {
+                        let team = this.$store.state.poulesValue.find(({name}) => name === t)
+                        if(team) poule.push(team)
+                    })
+                    poules.push(poule)
+                })
+                console.log(poules)
+                return this.poule ? poules.map((e, i) => i === this.poule-1 ? e : []) : poules
+            }
             const poules = []
             this.$store.state.poulesConfig.forEach(n => {
-                poules.push(copy.splice(0, n));
+                poules.push(copy.splice(0, n))
             })
-            return this.poule ? poules.map((e, i) => i === this.poule-1 ? e : []) : poules;
+            return this.poule ? poules.map((e, i) => i === this.poule-1 ? e : []) : poules
         },
         diceVisible () {
-            return !this.$store.state.poulesValue.find(e => e.name === this.$store.state.trigram);
+            return !this.$store.state.poulesValue.find(e => e.name === this.$store.state.trigram)
         }
     },
     methods: {
         sendRand () {
             // The server will take care of this
-            // this.diceVisible = false;
+            // this.diceVisible = false
             this.$socket.emit('poulesDice', Math.floor(Math.random() * 100))
         }
     },
     mounted () {
-        this.$store.dispatch('returnHomeIfNecessary');
+        this.$store.dispatch('returnHomeIfNecessary')
     }
 }
 </script>

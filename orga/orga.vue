@@ -16,6 +16,12 @@
       </li>
     </ul>
     <h2>Poules</h2>
+    <div class="customPoules"><input type="checkbox" v-model="customPoules" /> Forcer la répartition des poules</div>
+    <div v-if="customPoules">
+        Entrez les poules au format <pre>ABC,DEF,GHI<span class="semi">;</span>JKL,MNO,PQR<span class=semi>;</span>...</pre>
+        <input type="text" placeholder="Description des poules" v-model="descPoules" />
+    </div>
+    <div v-else>
     <input
       type="number"
       placeholder="Ajouter une poule (nombre d'équipes)"
@@ -29,6 +35,7 @@
         Poule {{alphabet[i]}}: {{poule}} équipes
       </li>
     </ul>
+    </div>
     <h2>Problèmes</h2>
     <input type="number" v-model="problemes">
     <h2>Mots de passe</h2>Envoyer le fichier de mots de passes:
@@ -57,7 +64,9 @@ export default {
             alphabet: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
             tournoi: '',
             tour2: false,
-            tour2exclusion: {}
+            tour2exclusion: {},
+            customPoules: false,
+            descPoules: ''
         };
     },
     mounted() {
@@ -121,6 +130,21 @@ export default {
         },
         send() {
             let failed = false
+            let descPoules = this.descPoules.replace(/[^A-Za-z,;]/g, '').toUpperCase().split(';').map(e => e.split(','))
+            let flatDesc = descPoules.reduce((a, v) => [...a, ...v])
+            console.log(descPoules, this.teams)
+            if(this.customPoules) {
+                this.poulesConfig = descPoules.map(e => e.length)
+                if(!flatDesc.every(t => this.teams.includes(t))) {
+                    alert('La description des poules contient une équipe inconnue')
+                }
+                if(descPoules.map(e => e.length).reduce((a,v)=>a+v) !== this.teams.length) {
+                    alert('La description des poules ne contient pas le bon nombre d\'équipes')
+                }
+                if(!this.teams.every(t => flatDesc.includes(t))) {
+                    alert('La description n\'inclus pas toutes les équipes.')
+                }
+            }
             if(this.tour2 && !this.teams.every(t => this.tour2exclusion[t] > 0)) {
                 alert('Tous les problèmes du tour 1 doivent être définis pour commencer le tour 2')
                 failed = true
@@ -149,13 +173,14 @@ export default {
                     teams: this.teams,
                     passwords: this.passwords,
                     tour2: this.tour2,
-                    tour2exclusion: this.tour2exclusion
+                    tour2exclusion: this.tour2exclusion,
+                    descPoules,
+                    customPoules: this.customPoules
                 })
             }).then(() => {
                 alert('Envoyé avec succès')
-            }).catch(e => {
+            }).catch(() => {
                 alert('Erreur lors de l\'envoi.')
-                console.trace(e)
             });
         }
     }
@@ -233,5 +258,9 @@ input.exclusion {
     display: inline-block;
     margin-left: 50px;
     width: 200px;
+}
+
+.semi {
+    color: red;
 }
 </style>

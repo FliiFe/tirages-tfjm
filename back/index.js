@@ -27,7 +27,9 @@ let problemes = 8
 let passwords = {}
 let tour2 = false
 let tour2exclusion = {}
-// Teams connectées, avec leur socketid
+let customPoules = false
+let descPoules = []
+// Équipes connectées, avec leur socketid
 let connectedTeams = []
 // Valeurs tirées par les équipes pour former les poules
 let poulesValue = []
@@ -141,7 +143,10 @@ io.on('connection', socket => {
         // Toutes les équipes ont tiré leur nombre
         if (poulesValue.length === teams.length) {
             let poulesCopy = poulesValue.slice(0)
-            poulesConfig.forEach(el =>
+            if(customPoules) {
+                log.notice('poules', 'Les poules sont forcées.')
+                poules = descPoules
+            } else poulesConfig.forEach(el =>
                 poules.push(poulesCopy.splice(0, el).map(({ name }) => name)))
             log.notice('poules', 'Fin du choix des poules. Résultats: %j', poules)
             tirages = getTirageObject(poules)
@@ -338,6 +343,7 @@ const updateClientsObject = () => {
     io.emit('problemes', problemes)
     io.emit('total', teams.length)
     io.emit('poulesConfig', poulesConfig)
+    io.emit('customPoules', {customPoules, descPoules})
 }
 
 /**
@@ -359,6 +365,10 @@ const updateConfig = (config) => {
     poulesConfig.forEach((_, i) => tirages[i + 1] = {})
     tour2 = !!config.tour2
     tour2exclusion = config.tour2exclusion
+    if(tour2) log.warn('config', 'Tournoi du deuxième tour. Exclusions:', tour2exclusion)
+    customPoules = config.customPoules
+    descPoules = config.descPoules
+    if(customPoules) log.warn('config', 'Poules forcées:', descPoules)
 }
 
 /**
