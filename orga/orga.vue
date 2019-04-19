@@ -106,10 +106,10 @@ export default {
                         .split('')
                         .concat([4]);
                 } else {
-                    this.poulesConfig = '3'
-                        .repeat(Math.floor(nteams / 3) - 1)
+                    this.poulesConfig = nteams === 5 ? [5] : '3'
+                        .repeat(Math.floor(nteams / 3) - 2)
                         .split('')
-                        .concat([5]);
+                        .concat([4, 4]);
                 }
             }
         },
